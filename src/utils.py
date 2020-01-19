@@ -32,29 +32,6 @@ def find_by_field(d, f, v):
         i += 1
     return l
 
-def tSNE(emb):
-    tsne = TSNE(n_components=2, verbose=1, perplexity=15, n_iter=500)
-    tsne_results = tsne.fit_transform(emb)
-    df_subset = {}
-    a = tsne_results[:,0]
-    b = tsne_results[:,1]
-    plt.figure(figsize=(16,10))
-    sns.scatterplot(
-        x=a, y=b,
-        palette=sns.color_palette("hls", 10),
-        legend="full",
-        alpha=0.3
-    )
-    plt.show()
-
-def embPCA(emb):
-    pca = PCA(n_components=3)
-    pca_result = pca.fit_transform(emb)
-    a = pca_result[:,0]
-    b = pca_result[:,1]
-    c = pca_result[:,2]
-    print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
-
 def export_tsv(emb, labels, file_name):
     s = ""
     for i in emb:
@@ -78,3 +55,44 @@ def export_tsv(emb, labels, file_name):
     f = open('../processed/{}_meta.tsv'.format(file_name),'w')
     f.write(s)
     f.close()
+
+def find_closest_n_points(d, data, n):
+    p = d
+    points = []
+    i = 0
+    while i < len(data):
+        points.append(data[i]['embedding_desc'].numpy())
+        i += 1
+    dist = []
+    for point in points:
+        dist.append(np.linalg.norm(p - point))
+
+    sm_index = find_smallest_n(dist, n)
+
+    f = []
+    for i in sm_index:
+        f.append(data[i])
+    return f
+
+#Resturns indices
+def find_smallest_n(l, n):
+    a = []
+    b = []
+    while len(a) < n:
+        i = 0
+        sm = np.max(100)
+        sm_i = 0
+        while i < len(l):
+            if len(a) == 0:
+                if l[i] < sm and l[i] > 0:
+                    sm = l[i]
+                    sm_i = i
+            else:
+                if l[i] > np.max(a):
+                    if l[i] < sm and l[i] > 0:
+                        sm = l[i]
+                        sm_i = i
+            i += 1
+        a.append(sm)
+        b.append(sm_i)
+    return b
